@@ -2,6 +2,8 @@
 
 Welcome to the **openPyVisionBook** repository! This project is an in-depth exploration of video processing techniques, mixing, and effects using Python, PyQt, and OpenCV. It is designed for both beginners and advanced users who are interested in the intricacies of video manipulation, and it is structured as a comprehensive book with accompanying code examples.
 
+You can find the entire Book simply in the Wiki section of this repository.
+
 ## Project Overview
 
 This repository contains the complete source code and documentation for the *openPyVisionBook*. The book is divided into chapters, each focusing on different aspects of video processing, from basic image manipulation to advanced mixing techniques.
