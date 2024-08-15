@@ -65,6 +65,11 @@ Alessio Michelassi - Creator and Author of openPyVisionBook.
 Acknowledgments
 
 Special thanks to all contributors and the open-source community for their support and inspiration.
+Last but not least, a big thank to:
+https://ocw.mit.edu/
+For the computer science course that inspired me to write this book.
+
+
 
 
 ### Explanation:
