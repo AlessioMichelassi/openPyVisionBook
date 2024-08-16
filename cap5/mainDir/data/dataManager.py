@@ -26,6 +26,8 @@ class DataManager(QObject):
         self.isReady = False
         self.isLoading = False
         self.hasError = False
+        currentDir = os.path.dirname(os.path.realpath(__file__))
+        self.currentFile = os.path.join(currentDir, "data.json")
 
     def loadData(self):
         """
@@ -39,10 +41,10 @@ class DataManager(QObject):
         self.hasError = False
         self.statusSignal.emit("Loading data")
 
-        if not os.path.exists("data.json"):
+        if not os.path.exists(self.currentFile):
             self.saveData()
         try:
-            with open("data.json", "r") as f:
+            with open(self.currentFile, "r") as f:
                 data = json.load(f)
                 self.stingerPath = data.get("stingerPath", "")
                 self.getStingerObject()
@@ -68,7 +70,7 @@ class DataManager(QObject):
         self.statusSignal.emit("Saving data")
 
         try:
-            with open("data.json", "w") as f:
+            with open(self.currentFile, "w") as f:
                 json.dump(self.serialize(), f)
         except IOError as e:
             print(f"Error saving data: {e}")
