@@ -1,3 +1,5 @@
+import time
+
 import cv2
 from PyQt6.QtCore import *
 from PyQt6.QtGui import QImage
@@ -13,7 +15,7 @@ from cap4.cap4_8.openGLViewer import OpenGLViewer
 from cap4.cap4_8.stingerLoader import StingerLoaderThread
 
 
-class testMixBus5_8(QWidget):
+class testMixBus4_9(QWidget):
     def __init__(self, synchObject, loaderThread, parent=None):
         super().__init__(parent)
         self.syncObject = synchObject
@@ -36,6 +38,11 @@ class testMixBus5_8(QWidget):
         self.initUI()
         self.initGeometry()
         self.initConnections()
+        self.start_time = time.time()
+        self.frame_count = 0
+        self.total_time = 0
+        self.fps = 0
+        self.last_update_time = time.time()
 
     def initUI(self):
         mainLayout = QVBoxLayout()
@@ -44,13 +51,13 @@ class testMixBus5_8(QWidget):
         viewerLayout.addWidget(self.programViewer)
         spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         buttonLayout = QHBoxLayout()
-        mainLayout.addWidget(self.lblFrameRate)
         buttonLayout.addItem(spacer)
         buttonLayout.addWidget(self.btnCut)
         buttonLayout.addWidget(self.btnAutoMix)
         buttonLayout.addWidget(self.sldFade)
         buttonLayout.addWidget(self.cmbEffect)
         mainLayout.addLayout(viewerLayout)
+        mainLayout.addWidget(self.lblFrameRate)
         mainLayout.addLayout(buttonLayout)
         self.setLayout(mainLayout)
 
@@ -69,11 +76,21 @@ class testMixBus5_8(QWidget):
         prw_frame, prg_frame = self.mixBus.getMixed()
         framerate1 = self.input1.fps
         framerate2 = self.input2.fps
-        self.lblFrameRate.setText(f"Frame Rate Input 1: {framerate1:.2f} - Frame Rate Input 2: {framerate2:.2f}")
+        self.updateFps()
         self.prw_image = QImage(prw_frame.data, prw_frame.shape[1], prw_frame.shape[0], QImage.Format.Format_BGR888)
         self.prg_image = QImage(prg_frame.data, prg_frame.shape[1], prg_frame.shape[0], QImage.Format.Format_BGR888)
         self.previewViewer.setImage(self.prw_image)
         self.programViewer.setImage(self.prg_image)
+        self.lblFrameRate.setText(f"fps Input1: {framerate1:.2f} - fps Input 2 2: {framerate2:.2f} fpsMixed: {self.fps:.2f}")
+
+    def updateFps(self):
+        self.frame_count += 1
+        current_time = time.time()
+        elapsed_time = current_time - self.last_update_time
+        if elapsed_time >= 1.0:  # Update FPS every second
+            self.fps = self.frame_count / elapsed_time
+            self.frame_count = 0
+            self.last_update_time = current_time
 
     def cut(self):
         self.mixBus.cut()
@@ -108,6 +125,6 @@ if __name__ == '__main__':
     synchObject = SynchObject()
     stingerDisplay = StingerDisplay(loaderThread)
     stingerDisplay.show()
-    test = testMixBus5_8(synchObject, loaderThread)
+    test = testMixBus4_9(synchObject, loaderThread)
     test.show()
     sys.exit(app.exec())

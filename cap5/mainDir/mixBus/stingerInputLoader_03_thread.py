@@ -7,53 +7,40 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 
-class StingerLoaderThread(QThread):
+class StingerLoaderThread03(QThread):
     stingerReady = pyqtSignal()
     progressUpdated = pyqtSignal()
 
     def __init__(self, _path, parent=None):
         super().__init__(parent)
         self.path = _path
-        self.stingerImages = []
-        self.stingerRGBImages = []
-        self.stingerAlphaImages = []
-        self.stingerInvAlphaImages = []
         self.stingerPreMultipliedImages = []
+        self.stingerInvAlphaImages = []
 
     def run(self):
-        self.loadStingerFrames(self.path)
-        self._findAlphaInvertAndMerge(self.stingerImages)
-        self._setPremultipliedFrame(self.stingerRGBImages)
-        # this free up the memory
-        self.stingerImages = []
-        self.stingerRGBImages = []
-        self.stingerAlphaImages = []
+        self.loadAndProcessStingerFrames(self.path)
         self.stingerReady.emit()
 
-    def loadStingerFrames(self, _path):
+    def loadAndProcessStingerFrames(self, _path):
         for filename in os.listdir(_path):
             if filename.endswith('.png'):
                 image_path = os.path.join(_path, filename)
                 image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-                self.stingerImages.append(image)
+                # Separare i canali
+                b, g, r, a = cv2.split(image)
+                a = a / 255.0  # Normalizza il canale alfa
+                alpha = cv2.merge((a, a, a))
+                invAlpha = cv2.merge((1 - a, 1 - a, 1 - a))
+
+                # Calcola l'immagine premoltiplicata
+                rgb_image = cv2.merge((b, g, r))
+                premultiplied = cv2.multiply(rgb_image.astype(np.float32), alpha, dtype=cv2.CV_8U)
+
+                # Aggiunge solo le informazioni necessarie
+                self.stingerPreMultipliedImages.append(premultiplied)
+                self.stingerInvAlphaImages.append(invAlpha)
+
                 self.progressUpdated.emit()
-
-    def _findAlphaInvertAndMerge(self, imageList):
-        for image in imageList:
-            b, g, r, a = cv2.split(image)
-            a = a / 255.0
-            alpha = cv2.merge((a, a, a))
-            invAlpha = cv2.merge((1 - a, 1 - a, 1 - a))
-            self.stingerAlphaImages.append(alpha)
-            self.stingerInvAlphaImages.append(invAlpha)
-            self.stingerRGBImages.append(cv2.merge((b, g, r)))
-            self.progressUpdated.emit()
-
-    def _setPremultipliedFrame(self, imageList):
-        for image, alpha in zip(imageList, self.stingerAlphaImages):
-            premultiplied = cv2.multiply(image.astype(np.float32), alpha, dtype=cv2.CV_8U)
-            self.stingerPreMultipliedImages.append(premultiplied)
-            self.progressUpdated.emit()
 
 
 class StingerDisplay(QWidget):
@@ -106,9 +93,9 @@ class StingerDisplay(QWidget):
 
 if __name__ == '__main__':
     path = r'C:\pythonCode\openPyVisionBook\openPyVisionBook\cap4\cap4_5\stingerTest'
-    stingerLoaderThread = StingerLoaderThread(path)
+    stingerLoaderThread = StingerLoaderThread03(path)
     app = QApplication([])
-    time.sleep(20)
+    time.sleep(10)
     stingerDisplay = StingerDisplay(stingerLoaderThread)
     stingerDisplay.show()
 

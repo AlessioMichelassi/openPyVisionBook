@@ -1,16 +1,14 @@
 import atexit
 import cProfile
-import io
 import pstats
 import sys
 
-import numpy as np
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 from cap5.mainDir.inputs.synchObject import SynchObject
-from cap5.mainDir.mixBus.testMixBus.testMixBusMain import testMixBus5_8
+from cap5.cap5_2.mainWindow5_2 import MainWindow
 
 
 def setPalette(_app):
@@ -38,10 +36,30 @@ def setPalette(_app):
     _app.setPalette(darkPalette)
 
 
+def run_app():
+    synchObject = SynchObject()
+    mainWin = MainWindow(synchObject)
+    mainWin.show()
+    sys.exit(app.exec())
+
+
+def print_profile_results(profiler):
+    # Stampa i risultati del profiling
+    stats = pstats.Stats(profiler).sort_stats('cumtime')
+    stats.print_stats(20)  # Stampa i primi 20 risultati
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     setPalette(app)
-    synchObject = SynchObject()
-    testMixBus = testMixBus5_8(synchObject)
-    testMixBus.show()
-    sys.exit(app.exec())
+
+    # Crea un profiler
+    profiler = cProfile.Profile()
+
+    # Registra la funzione che stamperà i risultati del profiler al termine del programma
+    atexit.register(print_profile_results, profiler)
+
+    # Avvia il profiler e la tua applicazione
+    profiler.enable()
+    run_app()
+    profiler.disable()

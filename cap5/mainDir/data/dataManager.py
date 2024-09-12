@@ -5,7 +5,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
 from cap5.mainDir.inputs.stillImageLoader import StillImageLoader
-from cap5.mainDir.mixBus.stingerInputLoader_02_thread import StingerDisplay, StingerLoaderThread
+from cap5.mainDir.mixBus.stingerInputLoader_03_thread import StingerLoaderThread03, StingerDisplay
 
 
 class DataManager(QObject):
@@ -102,7 +102,7 @@ class DataManager(QObject):
         self.isLoading = True
         self.statusSignal.emit("Loading stinger")
 
-        self.loaderThread = StingerLoaderThread(self.stingerPath)
+        self.loaderThread = StingerLoaderThread03(self.stingerPath)
         self.stingerDisplay = StingerDisplay(self.loaderThread)
         self.loaderThread.stingerReady.connect(self.onStingerReady)
         self.loaderThread.start()

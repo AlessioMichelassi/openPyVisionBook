@@ -33,6 +33,8 @@ class VideoApp(QApplication):
         self.initConnections()
         self.initGeometry()
         # test the payload
+        #chiude il programma dopo 20 secondi
+        QTimer.singleShot(20000, self.stop_app)
         #self.testPayload()
 
     def initUI(self):
@@ -64,16 +66,16 @@ class VideoApp(QApplication):
 
     def initConnections(self):
         self.uiTimer.timeout.connect(self.display_frame)
-        #QTimer.singleShot(10000, self.stop_app)
+        QTimer.singleShot(20000, self.stop_app)
 
     def initGeometry(self):
         self.viewer.setFixedSize(1920, 1080)
-        #self.widget.setGeometry(10, 50, 1920, 1080)
+        self.widget.setGeometry(10, 50, 1920, 1080)
         self.widget.show()
 
     def testPayload(self):
         print("Payload test")
-        #self.input1.isFlipped = True
+        self.input1.isFlipped = True
         self.input1.isFrameInverted = True
         self.input1.isFrameAutoScreen = True
         self.input1.isFrameHistogramEqualizationYUV = True
@@ -125,5 +127,5 @@ if __name__ == "__main__":
     s = io.StringIO()
     sortby = 'cumulative'
     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
+    ps.print_stats(30)
     print(s.getvalue())

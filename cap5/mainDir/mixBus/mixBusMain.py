@@ -271,7 +271,11 @@ class MixBusMain(QObject):
         :param program_frame:
         :return:
         """
-        _wipePosition = int(self._wipe_position_stinger_list[self._wipe])
+        # Ensure _wipe is within the bounds of _wipe_position_stinger_list
+        if self._wipe < len(self._wipe_position_stinger_list):
+            _wipePosition = int(self._wipe_position_stinger_list[self._wipe])
+        else:
+            _wipePosition = int(self._wipe_position_stinger_list[-1])
         stinger_frame = self.stinger_frames[_wipePosition]
         inv_mask = self.stinger_invMasks[_wipePosition]
 

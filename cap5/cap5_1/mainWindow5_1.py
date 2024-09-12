@@ -3,73 +3,105 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import QImage
 from PyQt6.QtWidgets import *
 
-from cap2.cap2_6.synchObject import SynchObject
-from cap3.cap3_1.colorGenerator import ColorGenerator
-from cap3.cap3_9.randomNoiseGenerator import RandomNoiseGenerator
+from cap5.mainDir.data.dataManager import DataManager
+from cap5.mainDir.inputs.colorGenerator import ColorGenerator
+from cap5.mainDir.inputs.randomNoiseGenerator import RandomNoiseGenerator
+from cap5.mainDir.inputs.synchObject import SynchObject
+from cap5.mainDir.mixBus.mixBusMain import MixBusMain, MIX_TYPE
+from cap5.mainDir.outputs.openGLViewer import OpenGLViewer
+from cap5.mainDir.outputs.openGLViewerThread import OpenGLViewerThread
 
-from cap4.cap4_5.stingerInputLoader_02_thread import StingerDisplay
-from cap4.cap4_8.mixBus4_8 import MixBus4_8, MIX_TYPE
-from cap4.cap4_8.openGLViewer import OpenGLViewer
-from cap4.cap4_8.stingerLoader import StingerLoaderThread
 
+class MainWindow5_1(QMainWindow):
 
-class testMixBus5_8(QWidget):
-    def __init__(self, synchObject, loaderThread, parent=None):
+    fpsMedia = 0
+
+    def __init__(self, _synchObject, parent=None):
         super().__init__(parent)
-        self.syncObject = synchObject
+        # Inizializzazione delle variabili
+        self.syncObject = _synchObject
         self.input1 = ColorGenerator(self.syncObject)
         self.input2 = RandomNoiseGenerator(self.syncObject)
-        self.mixBus = MixBus4_8(self.input1, self.input2, loaderThread)
+        self.mixBus = MixBusMain(self.input1, self.input2)
+        self.dataManager = DataManager()
+
         self.prw_image = QImage()
         self.prg_image = QImage()
-        self.previewViewer = OpenGLViewer()
-        self.programViewer = OpenGLViewer()
-        self.lblFrameRate = QLabel("Frame Rate Input 1: 0.0 - Frame Rate Input 2: 0.0")
+        self.previewViewer = OpenGLViewerThread()
+        self.programViewer = OpenGLViewerThread()
         self.btnCut = QPushButton("CUT")
         self.btnAutoMix = QPushButton("AutoMix")
-        self.sldFade = QSlider()
-        self.cmbEffect = QComboBox()
-        self.cmbEffect.addItems(["Fade", "Wipe Left to Right", "Wipe Right to Left",
-                                 "Wipe Top to Bottom", "Wipe Bottom to Top", "Stinger"])
-        self.sldFade.setOrientation(Qt.Orientation.Horizontal)
-        self.sldFade.setRange(0, 100)
+        self.sldFade = QSlider(Qt.Orientation.Horizontal)
+        self.cmbEffect = QComboBox(self)
+        self.lblFrameRate = QLabel("Frame Rate: 0.0")
+
+        # Configura l'interfaccia
         self.initUI()
         self.initGeometry()
         self.initConnections()
 
+    def __del__(self):
+        print(f"fps Media: {self.fpsMedia}")
+
     def initUI(self):
+        """
+        Inizializza l'interfaccia utente.
+        """
+        centralWidget = QWidget(self)
+        self.setCentralWidget(centralWidget)
+
+        # Layout principale
         mainLayout = QVBoxLayout()
         viewerLayout = QHBoxLayout()
         viewerLayout.addWidget(self.previewViewer)
         viewerLayout.addWidget(self.programViewer)
-        spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        mainLayout.addLayout(viewerLayout)
+
         buttonLayout = QHBoxLayout()
-        mainLayout.addWidget(self.lblFrameRate)
-        buttonLayout.addItem(spacer)
         buttonLayout.addWidget(self.btnCut)
         buttonLayout.addWidget(self.btnAutoMix)
         buttonLayout.addWidget(self.sldFade)
         buttonLayout.addWidget(self.cmbEffect)
-        mainLayout.addLayout(viewerLayout)
         mainLayout.addLayout(buttonLayout)
-        self.setLayout(mainLayout)
+        mainLayout.addWidget(self.lblFrameRate)
+
+        centralWidget.setLayout(mainLayout)
 
     def initGeometry(self):
+        """
+        Configura le dimensioni e la geometria dei widget.
+        """
         self.previewViewer.setFixedSize(640, 360)
         self.programViewer.setFixedSize(640, 360)
+        self.cmbEffect.addItems(["Fade", "Wipe Left to Right", "Wipe Right to Left",
+                                 "Wipe Top to Bottom", "Wipe Bottom to Top", "Stinger", "Still"])
+        self.sldFade.setRange(0, 100)
 
     def initConnections(self):
+        """
+        Configura le connessioni tra i segnali e gli slot.
+        """
         self.syncObject.synch_SIGNAL.connect(self.updateFrame)
         self.btnCut.clicked.connect(self.cut)
         self.btnAutoMix.clicked.connect(self.autoMix)
         self.sldFade.valueChanged.connect(self.setFade)
         self.cmbEffect.currentIndexChanged.connect(self.setEffect)
+        self.dataManager.errorSignal.connect(self.handleError)
+        self.dataManager.statusSignal.connect(print)
+        self.dataManager.readySignal.connect(self.initData)
+        self.dataManager.loadData()
+
+    def initData(self):
+        self.mixBus.setStinger(self.dataManager.stingerObject)
+        self.mixBus.setStill(self.dataManager.stillObject)
+
+    def handleError(self, error):
+        print(f"Error: {error}")
 
     def updateFrame(self):
         prw_frame, prg_frame = self.mixBus.getMixed()
-        framerate1 = self.input1.fps
-        framerate2 = self.input2.fps
-        self.lblFrameRate.setText(f"Frame Rate Input 1: {framerate1:.2f} - Frame Rate Input 2: {framerate2:.2f}")
+        self.lblFrameRate.setText(f"Frame Rate: {self.mixBus.get_fps():.2f}")
+        self.fpsMedia = self.mixBus.get_fps()
         self.prw_image = QImage(prw_frame.data, prw_frame.shape[1], prw_frame.shape[0], QImage.Format.Format_BGR888)
         self.prg_image = QImage(prg_frame.data, prg_frame.shape[1], prg_frame.shape[0], QImage.Format.Format_BGR888)
         self.previewViewer.setImage(self.prw_image)
@@ -79,6 +111,7 @@ class testMixBus5_8(QWidget):
         self.mixBus.cut()
 
     def autoMix(self):
+        print(f"debug: {self.sldFade.value()} fade: {self.cmbEffect.currentText()}")
         self.mixBus.autoMix()
 
     def setFade(self):
@@ -98,16 +131,15 @@ class testMixBus5_8(QWidget):
             self.mixBus.effectType = MIX_TYPE.WIPE_BOTTOM_TO_TOP
         elif effect == "Stinger":
             self.mixBus.effectType = MIX_TYPE.WIPE_STINGER
+        elif effect == "Still":
+            self.mixBus.effectType = MIX_TYPE.FADE_STILL
 
 
 if __name__ == '__main__':
     import sys
+
     app = QApplication(sys.argv)
-    path = r'C:\pythonCode\openPyVisionBook\openPyVisionBook\cap4\cap4_5\stingerTest'
-    loaderThread = StingerLoaderThread(path)
     synchObject = SynchObject()
-    stingerDisplay = StingerDisplay(loaderThread)
-    stingerDisplay.show()
-    test = testMixBus5_8(synchObject, loaderThread)
-    test.show()
+    mainWin = MainWindow5_1(synchObject)
+    mainWin.show()
     sys.exit(app.exec())

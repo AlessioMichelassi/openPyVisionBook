@@ -30,9 +30,10 @@ class BaseClassExtended(QObject):
         self.last_update_time = time.time()
 
     def captureFrame(self):
-        self.updateFps()
+        pass
 
     def getFrame(self):
+        self.updateFps()
         return self.frameProcessor(self._frame)
 
     def frameProcessor(self, frame):
