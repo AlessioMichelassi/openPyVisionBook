@@ -4,7 +4,7 @@ import os
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication
 
-from cap5.mainDir.inputs.stillImageLoader import StillImageLoader
+from cap3.cap3_9.stillImageLoader import StillImageLoader
 from cap5.mainDir.mixBus.stingerInputLoader_03_thread import StingerLoaderThread03, StingerDisplay
 
 

@@ -7,8 +7,8 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
+from cap2.cap2_6.synchObject import SynchObject
 from cap5.cap5_1.mainWindow5_1 import MainWindow5_1
-from cap5.mainDir.inputs.synchObject import SynchObject
 
 
 def setPalette(_app):
