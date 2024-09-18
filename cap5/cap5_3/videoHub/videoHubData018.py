@@ -1,14 +1,13 @@
-import json
 import logging
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from cap5.cap5_3.videoHub.inputDevice.generatorDevice.inputDevice_blackGenerator import InputDevice_BlackGenerator
-from cap5.cap5_3.videoHub.inputDevice.generatorDevice.inputDevice_colorGenerator import InputDevice_ColorGenerator
-from cap5.cap5_3.videoHub.inputDevice.generatorDevice.inputDevice_noiseGenerator import InputDevice_NoiseGenerator
-from cap5.cap5_3.videoHub.inputDevice.playerDevice.inputDevice_stillImagePlayerGenerator import \
+from cap5.mainDir.inputDevice.generatorDevice.inputDevice_blackGenerator import InputDevice_BlackGenerator
+from cap5.mainDir.inputDevice.generatorDevice.inputDevice_colorGenerator import InputDevice_ColorGenerator
+from cap5.mainDir.inputDevice.generatorDevice.inputDevice_noiseGenerator import InputDevice_NoiseGenerator
+from cap5.mainDir.inputDevice.playerDevice.inputDevice_stillImagePlayerGenerator import \
     InputDevice_StillImagePlayer
-from cap5.mainDir.inputs.generator.generator_Black import BlackGenerator
+from cap5.mainDir.inputDevice.generatorDevice.inputObject.generator_Black import BlackGenerator
 
 logging.basicConfig(
     level=logging.DEBUG,  # Set your application level
@@ -30,7 +29,7 @@ class VideoHubData018(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.videoHubMatrix = {}
-        for i in range(0,9):
+        for i in range(0, 9):
             self.addInputDevice(i, self.returnDefaultBlackInput())
 
         """self._stingerInput1 = self.returnDefaultBlackInput()
@@ -77,12 +76,14 @@ class VideoHubData018(QObject):
         if inputDevice and inputDevice.getThread() and not inputDevice.getThread().isRunning():
             inputDevice.start()
             logging.info(f"VIDEOHUBDATA -Thread started for input at position {position}")
+            self.emitTallySignal("inputChanged", position)
 
     def stopInputDevice(self, position):
         inputDevice = self.videoHubMatrix.get(position)
         if inputDevice and inputDevice.getThread() and inputDevice.getThread().isRunning():
             inputDevice.stop()
             logging.info(f"VIDEOHUBDATA -Thread stopped for input at position {position}")
+            self.emitTallySignal("inputChanged", position)
 
     def emitTallySignal(self, cmd, position):
         tally_status = {
@@ -91,7 +92,7 @@ class VideoHubData018(QObject):
             'position': position,
         }
         self.tally_SIGNAL.emit(tally_status)
-        logging.debug(f"VIDEOHUBDATA -Emesso segnale tally: {tally_status}")
+        logging.info(f"VIDEOHUBDATA -Emit Tally {tally_status}")
 
     def parseTallySignal(self, data):
         """

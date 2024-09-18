@@ -2,11 +2,12 @@ import logging
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 
-
-from cap5.cap5_3.videoHub.inputDevice.generatorDevice.inputDevice_colorGenerator import InputDevice_ColorGenerator
-from cap5.cap5_3.videoHub.inputDevice.generatorDevice.inputDevice_noiseGenerator import InputDevice_NoiseGenerator
-from cap5.cap5_3.videoHub.inputDevice.generatorDevice.inputDevice_smpteGenerator import InputDevice_SmpteGenerator
-from cap5.cap5_3.videoHub.inputDevice.playerDevice.inputDevice_stillImagePlayerGenerator import \
+from cap5.mainDir.inputDevice.captureDevice.inputDevice_cameraCapture import InputDevice_CameraCapture
+from cap5.mainDir.inputDevice.generatorDevice.inputDevice_colorGenerator import InputDevice_ColorGenerator
+from cap5.mainDir.inputDevice.generatorDevice.inputDevice_noiseGenerator import InputDevice_NoiseGenerator
+from cap5.mainDir.inputDevice.generatorDevice.inputDevice_smpteGenerator import InputDevice_SmpteGenerator
+from cap5.mainDir.inputDevice.captureDevice.inputDevice_desktopCapture import InputDevice_DesktopCapture
+from cap5.mainDir.inputDevice.playerDevice.inputDevice_stillImagePlayerGenerator import \
     InputDevice_StillImagePlayer
 from cap5.cap5_3.videoHub.videoHubData018 import VideoHubData018
 
@@ -27,8 +28,13 @@ class VideoHubWidget018(QWidget):
         self.videoHubData = _videoHubData
         self.current_index = 0
         self.generator_list = [
-            "Select input", "stillImage",
-            "colorGenerator", "noiseGenerator", "smpteBarsGenerator",
+            "Select input",
+            "cameraCapture",
+            "desktopCapture",
+            "stillImage",
+            "colorGenerator",
+            "noiseGenerator",
+            "smpteBarsGenerator",
         ]
         self.combo_boxes = []
         self.stacked_widgets = []
@@ -113,6 +119,10 @@ class VideoHubWidget018(QWidget):
             inputDevice = InputDevice_StillImagePlayer(input_position, self)
         elif selected_input == "smpteBarsGenerator":
             inputDevice = InputDevice_SmpteGenerator(input_position, self)
+        elif selected_input == "desktopCapture":
+            inputDevice = InputDevice_DesktopCapture(input_position, self)
+        elif selected_input == "cameraCapture":
+            inputDevice = InputDevice_CameraCapture(input_position, self)
 
         if inputDevice:
             # Aggiungi l'InputDevice al VideoHubData
@@ -123,7 +133,6 @@ class VideoHubWidget018(QWidget):
                 widget_to_remove = stacked_widget.widget(i)
                 stacked_widget.removeWidget(widget_to_remove)
                 widget_to_remove.deleteLater()
-
             # Aggiungi la graphicInterface dell'InputDevice allo stacked_widget
             stacked_widget.addWidget(inputDevice.graphicInterface)
             # Imposta l'indice corrente sul nuovo widget
@@ -134,18 +143,15 @@ class VideoHubWidget018(QWidget):
 
     def toggleCapture(self, state, comboBox, stacked_widget):
         input_index = self.combo_boxes.index(comboBox)+1
-
         if state:  # Se l'utente attiva l'input
             logging.info(f"Activating input {input_index}")
             self.videoHubData.startInputDevice(input_index)
-            # Disabilita la ComboBox
             comboBox.setEnabled(False)
         else:  # Se l'utente disattiva l'input
             logging.info(f"Deactivating input {input_index}")
             self.videoHubData.stopInputDevice(input_index)
             # Abilita la ComboBox
             comboBox.setEnabled(True)
-
         self.printVideoHubContent()
 
     def getTally(self, tally_data):
